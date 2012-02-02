@@ -1,7 +1,7 @@
 package controllers;
  
 import java.security.SecureRandom;
-
+import java.util.*;
 import models.Check;
 import models.Role;
 import models.SecurityIdent;
@@ -41,13 +41,15 @@ public class SecurityPlugin extends Controller {
 	 */
     public static boolean authenticate(@Required String username, @Required String password) {	
 
+		SecurityIdent securityIdent = new SecurityIdent();
+		
 		//Si c'est un user invité
 		if(("guest").equalsIgnoreCase(username) && ("guest").equalsIgnoreCase(password)){
-			SecurityIdent securityIdent = new SecurityIdent();
 			securityIdent.identStatus = true;
 			Role roleGuest = new Role("guest");
 			User userGuest = new User("guest", "guest");
-			userGuest.roles = roleGuest;
+			userGuest.roles = new ArrayList<Role>();
+			userGuest.roles.add(roleGuest);
 			securityIdent.userConnect = userGuest;
 		}else{
 			String urlAuthenticate = Play.configuration.getProperty("application.urlAdmin") + "AuthenticateAction/login?username=" + username + "&password=" + password + "&application=" + Play.configuration.getProperty("application.name");
@@ -57,7 +59,7 @@ public class SecurityPlugin extends Controller {
 			if(res.getStatus() != 200){
 				return false; //TODO 
 			}
-			SecurityIdent securityIdent = new Gson().fromJson(res.getJson(), SecurityIdent.class);
+			securityIdent = new Gson().fromJson(res.getJson(), SecurityIdent.class);
 		}
 		
 		if(securityIdent.identStatus){
