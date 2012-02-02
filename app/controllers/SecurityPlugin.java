@@ -41,15 +41,24 @@ public class SecurityPlugin extends Controller {
 	 */
     public static boolean authenticate(@Required String username, @Required String password) {	
 
-		String urlAuthenticate = Play.configuration.getProperty("application.urlAdmin") + "AuthenticateAction/login?username=" + username + "&password=" + password + "&application=" + Play.configuration.getProperty("application.name");
+		//Si c'est un user invité
+		if(("guest").equalsIgnoreCase(username) && ("guest").equalsIgnoreCase(password)){
+			SecurityIdent securityIdent = new SecurityIdent();
+			securityIdent.identStatus = true;
+			Role roleGuest = new Role("guest");
+			User userGuest = new User("guest", "guest");
+			userGuest.roles = roleGuest;
+			securityIdent.userConnect = userGuest;
+		}else{
+			String urlAuthenticate = Play.configuration.getProperty("application.urlAdmin") + "AuthenticateAction/login?username=" + username + "&password=" + password + "&application=" + Play.configuration.getProperty("application.name");
 
-		//Appel en webService de la partie pour l'authentification
-		HttpResponse res = WS.url(urlAuthenticate).get();
-		if(res.getStatus() != 200){
-			return false; //TODO 
+			//Appel en webService de la partie pour l'authentification
+			HttpResponse res = WS.url(urlAuthenticate).get();
+			if(res.getStatus() != 200){
+				return false; //TODO 
+			}
+			SecurityIdent securityIdent = new Gson().fromJson(res.getJson(), SecurityIdent.class);
 		}
-		
-		SecurityIdent securityIdent = new Gson().fromJson(res.getJson(), SecurityIdent.class);
 		
 		if(securityIdent.identStatus){
 			//On mets en session le user
