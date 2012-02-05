@@ -77,5 +77,6 @@
 	<classpathentry kind="lib" path="/home/himurafred/application_mobile/play/framework/lib/antlr-2.7.6.jar"/>
 	<classpathentry kind="lib" path="/home/himurafred/application_mobile/play/framework/lib/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="lib" path="/home/himurafred/application_mobile/play/framework/lib/mail-1.4.3.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/exploit"/>
 	<classpathentry kind="output" path="eclipse/classes"/>
 </classpath>

@@ -1,7 +1,8 @@
 package controllers;
  
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+
 import models.Check;
 import models.Role;
 import models.SecurityIdent;
@@ -18,9 +19,10 @@ import play.libs.WS.HttpResponse;
 import play.mvc.Before;
 import play.mvc.Controller;
 import play.mvc.Http.Cookie;
+import play.mvc.With;
 
 import com.google.gson.Gson;
- 
+@With({RequestHttp.class, OpenApi.class, Auditor.class})
 public class SecurityPlugin extends Controller {
     	
 	/**
@@ -142,6 +144,5 @@ public class SecurityPlugin extends Controller {
 			renderJSON(0);
 		}
 		renderJSON(random.nextInt());
-	}
-	
+	}	
 }
