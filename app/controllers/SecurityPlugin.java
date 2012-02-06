@@ -2,15 +2,17 @@ package controllers;
  
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Date;
 
 import models.Check;
-import models.Role;
 import models.SecurityIdent;
-import models.User;
-
+import models.common.Role;
+import models.common.User;
+import models.common.Exception;
 import org.apache.commons.lang.StringUtils;
 
 import parser.Parser;
+import play.Logger;
 import play.Play;
 import play.data.validation.Required;
 import play.libs.Crypto;
@@ -47,7 +49,7 @@ public class SecurityPlugin extends Controller {
 		
 		//Si c'est un user invité
 		if(("guest").equalsIgnoreCase(username) && ("guest").equalsIgnoreCase(password)){
-			securityIdent.identStatus = true;
+			securityIdent.codeRetour = 200;
 			Role roleGuest = new Role("guest");
 			User userGuest = new User("guest", "guest");
 			userGuest.roles = new ArrayList<Role>();
@@ -59,20 +61,38 @@ public class SecurityPlugin extends Controller {
 			//Appel en webService de la partie pour l'authentification
 			HttpResponse res = WS.url(urlAuthenticate).get();
 			if(res.getStatus() != 200){
-				return false; //TODO 
+				Logger.error("Erreur de communication avec le serveur admin méthode (login) : " + res.getStatus());
+				renderJSON(new Exception(500, "Bad communication with admin server")); 
 			}
 			securityIdent = new Gson().fromJson(res.getJson(), SecurityIdent.class);
 		}
 		
-		if(securityIdent.identStatus){
-			//On mets en session le user
-			session.put("user", new Gson().toJson(securityIdent.userConnect).toString());
-			//On enregistre dans un cookie le user pour une durée d'un mois
-			response.setCookie("rememberme", Crypto.encryptAES(new Gson().toJson(securityIdent.userConnect).toString()), "30d");
-			return true;
+		if(securityIdent.codeRetour == 200){
+			return putUserInSession(securityIdent);
+		}else if(securityIdent.codeRetour == 202){
+			//Création du user
+			String urlAuthenticate = Play.configuration.getProperty("application.urlAdmin") + "AuthenticateAction/createUser?username=" + username + "&password=" + password + "&application=" + Play.configuration.getProperty("application.name");
+			//Appel en webService de la partie pour l'authentification
+			HttpResponse res = WS.url(urlAuthenticate).get();
+			if(res.getStatus() != 200){
+				Logger.error("Erreur de communication avec le serveur admin méthode (createUser) : " + res.getStatus());
+				new Exception(500, "Bad communication with admin server");
+			}
+			securityIdent = new Gson().fromJson(res.getJson(), SecurityIdent.class);
+			return putUserInSession(securityIdent);
 		}
-		return false;
-    }    
+		
+		//Erreur de password
+		renderJSON(new Exception(201, "Bad password"));
+    }
+
+	private static boolean putUserInSession(SecurityIdent securityIdent) {
+		//On mets en session le user
+		session.put("user", new Gson().toJson(securityIdent.userConnect).toString());
+		//On enregistre dans un cookie le user pour une durée d'un mois
+		response.setCookie("rememberme", Crypto.encryptAES(new Gson().toJson(securityIdent.userConnect).toString()), "30d");
+		renderJSON(200);
+	}    
 
     /**
      * Méthode de vérification si le client est connecté
@@ -122,14 +142,14 @@ public class SecurityPlugin extends Controller {
     	
 	public static void login(@Required String username, @Required String password){
 		if(StringUtils.isEmpty(username) || StringUtils.isEmpty(password))
-			renderJSON(false);
+			renderJSON(new Exception(203, "Invalid user and login"));
     	renderJSON(SecurityPlugin.authenticate(username, password));
     }
 
 	public static void logout(){
 	     session.clear();
 		 response.removeCookie("rememberme");
-		 renderJSON(true);
+		 renderJSON(200);
 	}
 	
 	/**
@@ -139,7 +159,7 @@ public class SecurityPlugin extends Controller {
 		SecureRandom random = null;
 		try {
 			random = SecureRandom.getInstance("SHA1PRNG");
-		} catch (Exception e) {
+		} catch (java.lang.Exception e) {
 			//En cas de pb on retourne 0 pour ne pas bloquer l'ident
 			renderJSON(0);
 		}

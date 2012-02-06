@@ -1,8 +1,10 @@
 package models;
 
+import models.common.User;
+
 public class SecurityIdent {
 
-	public boolean identStatus;
+	public int codeRetour;
 	
 	public User userConnect;	
 }

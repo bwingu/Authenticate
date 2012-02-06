@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import models.Role;
+import models.common.Role;
 
 public class Parser {
 
