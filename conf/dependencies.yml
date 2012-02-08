@@ -2,3 +2,12 @@ self: play -> Authenticate 0.1
 
 require:
     - play
+	- com.bwingu -> common 0.1
+	
+	repositories:
+    
+    - bwingu:
+        type:       http
+        artifact:   "http://www.bforbrain.com/repo/[module]/[module]-[revision].zip"
+        contains:
+            - com.bwingu -> *
